@@ -19,10 +19,10 @@ g = 9.8  # [m/s^2]
 
 nx = 4  # number of state
 nu = 1  # number of input
-Q = np.diag([1.0, 1.0, 1.0, 0.0])  # state cost matrix
+Q = np.diag([1.0, 1.0, 1.0, 1.0])  # state cost matrix
 R = np.diag([0.01])  # input cost matrix
 
-delta_t = 0.1  # time tick [s]
+delta_t = 0.05  # time tick [s]
 sim_time = 5.0  # simulation time [s]
 
 show_animation = True
@@ -32,21 +32,28 @@ def main():
     x0 = np.array([
         [0.0],
         [0.0],
-        [0.3],
-        [0.0]
+        [0.0],
+        [0.8]
     ])
 
     x = np.copy(x0)
     time = 0.0
 
-    while 20 > time:
+    Log = []
+    ball_positions = []  # List to store ball positions
+    plt.gca().set_facecolor('white')
+
+
+    while 10 > time:
         time += delta_t
 
         # calc control input
-        u,K = lqr_control(x)
+        u, K = lqr_control(x)
 
         # simulate inverted pendulum cart
         x = simulation(x, u)
+
+        Log.append((time, x[0, 0], x[2, 0]))
 
         if show_animation:
             plt.clf()
@@ -54,14 +61,49 @@ def main():
             theta = float(x[2, 0])
             plot_cart(px, theta)
             plt.xlim([-5.0, 2.0])
+
+            # Calculate ball position
+            ball_x = px + l_bar * math.sin(theta)
+            ball_y = l_bar * math.cos(theta) + 0.7
+            ball_positions.append((ball_x, ball_y))
+
+            # Plot ball trajectory
+            # Plot ball trajectory
+            ball_positions_np = np.array(ball_positions)
+            plt.scatter(ball_positions_np[:, 0], ball_positions_np[:, 1], color='c', s=10)
+
+
             plt.pause(0.001)
 
     print("Finish")
     print(f"x={float(x[0, 0]):.2f} [m] , theta={math.degrees(x[2, 0]):.2f} [deg]")
-    print(K,u)
+    print(K, u)
     print(cost_function(x, u))
     if show_animation:
         plt.show()
+
+    # Plotting px and theta over time
+    times = [entry[0] for entry in Log]
+    px_values = [entry[1] for entry in Log]
+    theta_values = [entry[2] for entry in Log]
+
+    plt.figure()
+    plt.subplot(2, 1, 1)
+    plt.plot(times, px_values, label='px [m]')
+    plt.xlabel('Time [s]')
+    plt.ylabel('px [m]')
+    plt.grid(True)
+    plt.legend()
+
+    plt.subplot(2, 1, 2)
+    plt.plot(times, [math.degrees(theta) for theta in theta_values], label='theta [deg]')
+    plt.xlabel('Time [s]')
+    plt.ylabel('theta [deg]')
+    plt.grid(True)
+    plt.legend()
+
+    plt.tight_layout(pad=2.0)  # Adjust the padding between and around subplots
+    plt.show()
 
 
 def simulation(x, u):
@@ -70,7 +112,6 @@ def simulation(x, u):
 
     return x
 
-t = 0.0
 
 def cost_function(x, u):
     cost = 0.0
@@ -78,6 +119,7 @@ def cost_function(x, u):
         cost += np.dot(x.T, np.dot(Q, x)) + np.dot(u.T, np.dot(R, u))
         x = simulation(x, u)
     return cost
+
 
 def solve_DARE(A, B, Q, R, maxiter=1500, eps=0.01):
     """
@@ -121,7 +163,7 @@ def lqr_control(x):
     elapsed_time = time.time() - start
     print(f"calc time:{elapsed_time:.6f} [sec]")
 
-    return u,K
+    return u, K
 
 
 def get_numpy_array_from_matrix(x):
@@ -181,21 +223,18 @@ def plot_cart(xt, theta):
     lwx = np.copy(ox) - cart_w / 4.0 + xt
     lwy = np.copy(oy) + radius
 
-    wx = np.copy(ox) + bx[-1]
-    wy = np.copy(oy) + by[-1]
+    wx = np.copy(ox) + bx[1]
+    wy = np.copy(oy) + by[1]
 
-    plt.plot(flatten(cx), flatten(cy), "-b")
+    plt.fill(flatten(cx), flatten(cy), 'royalblue', edgecolor='k')  # Fill color for the cart
     plt.plot(flatten(bx), flatten(by), "-k")
-    plt.plot(flatten(rwx), flatten(rwy), "-k")
-    plt.plot(flatten(lwx), flatten(lwy), "-k")
-    plt.plot(flatten(wx), flatten(wy), "-k")
+    plt.fill(flatten(rwx), flatten(rwy), "gray", edgecolor='k')  # Fill color for the right wheel
+    plt.fill(flatten(lwx), flatten(lwy), "gray", edgecolor='k')  # Fill color for the left wheel
+    plt.fill(flatten(wx), flatten(wy), "lightsteelblue", edgecolor='k')  # Fill color for the pendulum ball
     plt.title(f"x: {xt:.2f} , theta: {math.degrees(theta):.2f}")
 
     # for stopping simulation with the esc key.
-    plt.gcf().canvas.mpl_connect(
-        'key_release_event',
-        lambda event: [exit(0) if event.key == 'escape' else None])
-
+    plt.gcf().canvas.mpl_connect('key_release_event', lambda event: [exit(0) if event.key == 'escape' else None])
     plt.axis("equal")
 
 
