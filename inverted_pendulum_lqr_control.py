@@ -23,7 +23,7 @@ Q = np.diag([1.0, 1.0, 1.0, 1.0])  # state cost matrix
 R = np.diag([0.01])  # input cost matrix
 
 delta_t = 0.05  # time tick [s]
-sim_time = 5.0  # simulation time [s]
+sim_time = 10.0  # simulation time [s]
 
 show_animation = True
 
@@ -33,7 +33,7 @@ def main():
         [0.0],
         [0.0],
         [0.0],
-        [0.8]
+        [1.0]
     ])
 
     x = np.copy(x0)
@@ -42,7 +42,6 @@ def main():
     Log = []
     ball_positions = []  # List to store ball positions
     plt.gca().set_facecolor('white')
-
 
     while 10 > time:
         time += delta_t
@@ -53,7 +52,7 @@ def main():
         # simulate inverted pendulum cart
         x = simulation(x, u)
 
-        Log.append((time, x[0, 0], x[2, 0]))
+        Log.append((time, x[0, 0], x[2, 0], float(u[0,0])))
 
         if show_animation:
             plt.clf()
@@ -86,23 +85,31 @@ def main():
     times = [entry[0] for entry in Log]
     px_values = [entry[1] for entry in Log]
     theta_values = [entry[2] for entry in Log]
+    u_values = [entry[3] for entry in Log]
 
     plt.figure()
-    plt.subplot(2, 1, 1)
+    plt.subplot(3, 1, 1)
     plt.plot(times, px_values, label='px [m]')
     plt.xlabel('Time [s]')
-    plt.ylabel('px [m]')
+    plt.ylabel('s [m]')
     plt.grid(True)
     plt.legend()
 
-    plt.subplot(2, 1, 2)
+    plt.subplot(3, 1, 2)
     plt.plot(times, [math.degrees(theta) for theta in theta_values], label='theta [deg]')
     plt.xlabel('Time [s]')
-    plt.ylabel('theta [deg]')
+    plt.ylabel('q [deg]')
     plt.grid(True)
     plt.legend()
 
-    plt.tight_layout(pad=2.0)  # Adjust the padding between and around subplots
+    plt.subplot(3, 1, 3)
+    plt.plot(times, u_values, label='u [N]')
+    plt.xlabel('Time [s]')
+    plt.ylabel('Control Input u [N]')
+    plt.grid(True)
+    plt.legend()
+
+    plt.tight_layout(pad=0.7)  # Adjust the padding between and around subplots
     plt.show()
 
 
@@ -133,6 +140,7 @@ def solve_DARE(A, B, Q, R, maxiter=1500, eps=0.01):
         if (abs(Pn - P)).max() < eps:
             break
         P = Pn
+        #print(P)
 
     return Pn
 
@@ -161,7 +169,7 @@ def lqr_control(x):
     K, _, _ = dlqr(A, B, Q, R)
     u = -K @ x
     elapsed_time = time.time() - start
-    print(f"calc time:{elapsed_time:.6f} [sec]")
+    # print(f"calc time:{elapsed_time:.6f} [sec]")
 
     return u, K
 

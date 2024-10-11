@@ -19,13 +19,13 @@ m = 0.3  # [kg]
 g = 9.8  # [m/s^2]
 
 Q = np.diag([1.0, 1.0, 1.0, 1.0])  # state cost matrix
-R = np.diag([0.1])  # input cost matrix
+R = np.diag([0.01])  # input cost matrix
 
 nx = 4  # number of state
 nu = 1  # number of input
 
 delta_t = 0.05  # time tick [s]
-sim_time = 5.0  # simulation time [s]
+sim_time = 10.0  # simulation time [s]
 
 show_animation = True
 
