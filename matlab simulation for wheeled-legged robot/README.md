@@ -1,3 +1,5 @@
+这是一个移植自https://github.com/Skythinker616/foc-wheel-legged-robot的研究项目，旨在研究不同Q矩阵对机器人机动性的影响。
+
 # 模型搭建&算法仿真
 
 **简体中文 | [English](README_en.md)**
