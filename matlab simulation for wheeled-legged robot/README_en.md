@@ -1,3 +1,5 @@
+This research project is a transplant from https://github.com/Skythinker616/foc-wheel-legged-robot, designed to study the effect of different Q matrix of robot mobility.
+
 # Model Building & Algorithm Simulation
 
 **[简体中文](README.md) | English**
